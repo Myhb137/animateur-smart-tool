@@ -7,7 +7,7 @@ import {
   UsersRound, Building2,
   Heart, Copy, Printer, Check,
   Smile, Drama, Loader2,
-  Star, Zap
+  Star, Zap, Bookmark, Trash2
 } from 'lucide-react';
 import { generateActivityContent } from './aiService';
 
@@ -93,7 +93,9 @@ const TAB_CONFIG = [
   { key: 'songs',       Icon: Music,     label: 'الأغاني',      color: '#FF9F1C' },
   { key: 'games',       Icon: Gamepad2,  label: 'الألعاب',      color: '#2EC4B6' },
   { key: 'activities',  Icon: Drama,     label: 'الأنشطة',      color: '#A78BFA' },
+  { key: 'plays',       Icon: Smile,     label: 'المسرحيات',    color: '#FF6B9D' },
   { key: 'icebreakers', Icon: Smile,     label: 'كسر الجليد',   color: '#FF6B6B' },
+  { key: 'saved',       Icon: Bookmark,  label: 'المحفوظات',    color: '#FFD700' },
 ];
 
 const AGE_OPTIONS = [
@@ -131,14 +133,31 @@ export default function App() {
   const [ageGroups, setAgeGroups]       = useState([]);
   const [environments, setEnvironments] = useState([]);
   const [groupSize, setGroupSize]       = useState('');
-  const [contentTypes, setContentTypes] = useState(['songs','games','activities','icebreakers']);
+  const [contentTypes, setContentTypes] = useState(['songs','games','activities','plays','icebreakers']);
 
   const [isLoading, setIsLoading]   = useState(false);
   const [results, setResults]       = useState(null);
   const [activeTab, setActiveTab]   = useState('songs');
   const [copiedId, setCopiedId]     = useState(null);
-  const [favorites, setFavorites]   = useState([]);
+  const [saved, setSaved]           = useState([]); // Array of saved items
   const [toast, setToast]           = useState('');
+
+  // Load saved items from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem('animateur_saved_items');
+    if (stored) {
+      try {
+        setSaved(JSON.parse(stored));
+      } catch (err) {
+        console.warn('Failed to load saved items:', err);
+      }
+    }
+  }, []);
+
+  // Save to localStorage whenever saved changes
+  useEffect(() => {
+    localStorage.setItem('animateur_saved_items', JSON.stringify(saved));
+  }, [saved]);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -153,9 +172,27 @@ export default function App() {
     setTimeout(() => setCopiedId(null), 2000);
   }, []);
 
-  const toggleFav = useCallback((id) =>
-    setFavorites(f => f.includes(id) ? f.filter(v => v !== id) : [...f, id]),
-  []);
+  const toggleSave = useCallback((item, type) => {
+    const itemId = `${type}-${item.title}-${Date.now()}`;
+    const isSaved = saved.some(s => s.id === itemId);
+    
+    if (isSaved) {
+      setSaved(saved.filter(s => s.id !== itemId));
+      showToast('تم الحذف من المحفوظات');
+    } else {
+      setSaved([...saved, { id: itemId, type, item, savedAt: new Date().toISOString() }]);
+      showToast('تم الحفظ بنجاح! ✓');
+    }
+  }, [saved]);
+
+  const isSaved = (item, type) => {
+    return saved.some(s => s.type === type && s.item.title === item.title);
+  };
+
+  const removeSaved = useCallback((id) => {
+    setSaved(saved.filter(s => s.id !== id));
+    showToast('تم الحذف من المحفوظات');
+  }, [saved]);
 
   const showToast = (msg) => {
     setToast(msg);
@@ -345,70 +382,127 @@ export default function App() {
 
             {/* Tabs */}
             <nav className="tabs-nav" role="tablist">
-              {TAB_CONFIG.filter(t => results[t.key]?.length > 0).map(tab => (
-                <button
-                  key={tab.key}
-                  role="tab"
-                  className={`tab-btn ${activeTab === tab.key ? 'active' : ''}`}
-                  onClick={() => setActiveTab(tab.key)}
-                  aria-selected={activeTab === tab.key}
-                >
-                  <tab.Icon size={16} strokeWidth={2} />
-                  {tab.label}
-                  <span className="tab-count">{results[tab.key]?.length ?? 0}</span>
-                </button>
-              ))}
+              {TAB_CONFIG.map(tab => {
+                const count = tab.key === 'saved' 
+                  ? saved.length 
+                  : results[tab.key]?.length ?? 0;
+                
+                return count > 0 ? (
+                  <button
+                    key={tab.key}
+                    role="tab"
+                    className={`tab-btn ${activeTab === tab.key ? 'active' : ''}`}
+                    onClick={() => setActiveTab(tab.key)}
+                    aria-selected={activeTab === tab.key}
+                  >
+                    <tab.Icon size={16} strokeWidth={2} />
+                    {tab.label}
+                    <span className="tab-count">{count}</span>
+                  </button>
+                ) : null;
+              })}
             </nav>
 
             {/* Cards */}
             <div className="result-list">
-              {currentItems.length === 0 ? (
-                <div className="empty-state glass-card">
-                  <Smile size={48} color="var(--text-muted)" strokeWidth={1.5} />
-                  <p style={{ marginTop: '1rem' }}>لا توجد نتائج في هذا القسم</p>
-                </div>
-              ) : (
-                currentItems.map((item, idx) => {
-                  const meta = tabMeta[activeTab];
-                  const cardId = `${activeTab}-${idx}`;
-                  return (
-                    <div key={cardId} className="result-card" style={{ animationDelay: `${idx * 0.08}s` }}>
-                      <div className="result-card-header">
-                        <div className="result-card-icon" style={{ background: `${meta.color}22` }}>
-                          <meta.Icon size={20} color={meta.color} strokeWidth={2} />
+              {activeTab === 'saved' ? (
+                // Saved items view
+                saved.length === 0 ? (
+                  <div className="empty-state glass-card">
+                    <Bookmark size={48} color="var(--text-muted)" strokeWidth={1.5} />
+                    <p style={{ marginTop: '1rem' }}>لا توجد عناصر محفوظة حتى الآن</p>
+                    <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>احفظ أغانيك وألعابك المفضلة هنا!</p>
+                  </div>
+                ) : (
+                  saved.map((savedItem, idx) => {
+                    const meta = Object.fromEntries(TAB_CONFIG.map(t => [t.key, t]))[savedItem.type];
+                    return (
+                      <div key={savedItem.id} className="result-card" style={{ animationDelay: `${idx * 0.08}s` }}>
+                        <div className="result-card-header">
+                          <div className="result-card-icon" style={{ background: `${meta.color}22` }}>
+                            <meta.Icon size={20} color={meta.color} strokeWidth={2} />
+                          </div>
+                          <div className="result-card-title">{savedItem.item.title}</div>
+                          <div className="result-card-actions">
+                            <button
+                              className="icon-btn"
+                              onClick={() => handleCopy(savedItem.item.content, savedItem.id)}
+                              title="نسخ"
+                              aria-label="نسخ المحتوى"
+                            >
+                              {copiedId === savedItem.id
+                                ? <Check size={18} color="#4ADE80" strokeWidth={2.5} />
+                                : <Copy size={18} strokeWidth={2} />
+                              }
+                            </button>
+                            <button
+                              className="icon-btn"
+                              onClick={() => removeSaved(savedItem.id)}
+                              title="حذف"
+                              aria-label="حذف من المحفوظات"
+                            >
+                              <Trash2 size={18} strokeWidth={2} color="#FF6B6B" />
+                            </button>
+                          </div>
                         </div>
-                        <div className="result-card-title">{item.title}</div>
-                        <div className="result-card-actions">
-                          <button
-                            className={`icon-btn ${favorites.includes(cardId) ? 'active' : ''}`}
-                            onClick={() => toggleFav(cardId)}
-                            title="المفضلة"
-                            aria-label="إضافة للمفضلة"
-                          >
-                            <Heart
-                              size={18}
-                              strokeWidth={2}
-                              fill={favorites.includes(cardId) ? '#FF4757' : 'none'}
-                              color={favorites.includes(cardId) ? '#FF4757' : 'currentColor'}
-                            />
-                          </button>
-                          <button
-                            className={`icon-btn ${copiedId === cardId ? 'copied' : ''}`}
-                            onClick={() => handleCopy(item.content, cardId)}
-                            title="نسخ"
-                            aria-label="نسخ المحتوى"
-                          >
-                            {copiedId === cardId
-                              ? <Check size={18} color="#4ADE80" strokeWidth={2.5} />
-                              : <Copy size={18} strokeWidth={2} />
-                            }
-                          </button>
+                        <div className="result-card-body">{savedItem.item.content}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+                          محفوظ: {new Date(savedItem.savedAt).toLocaleDateString('ar-DZ')}
                         </div>
                       </div>
-                      <div className="result-card-body">{item.content}</div>
-                    </div>
-                  );
-                })
+                    );
+                  })
+                )
+              ) : (
+                // Results view
+                currentItems.length === 0 ? (
+                  <div className="empty-state glass-card">
+                    <Smile size={48} color="var(--text-muted)" strokeWidth={1.5} />
+                    <p style={{ marginTop: '1rem' }}>لا توجد نتائج في هذا القسم</p>
+                  </div>
+                ) : (
+                  currentItems.map((item, idx) => {
+                    const meta = tabMeta[activeTab];
+                    const cardId = `${activeTab}-${idx}`;
+                    return (
+                      <div key={cardId} className="result-card" style={{ animationDelay: `${idx * 0.08}s` }}>
+                        <div className="result-card-header">
+                          <div className="result-card-icon" style={{ background: `${meta.color}22` }}>
+                            <meta.Icon size={20} color={meta.color} strokeWidth={2} />
+                          </div>
+                          <div className="result-card-title">{item.title}</div>
+                          <div className="result-card-actions">
+                            <button
+                              className={`icon-btn ${isSaved(item, activeTab) ? 'active' : ''}`}
+                              onClick={() => toggleSave(item, activeTab)}
+                              title="حفظ"
+                              aria-label="إضافة للمحفوظات"
+                            >
+                              <Heart
+                                size={18}
+                                strokeWidth={2}
+                                fill={isSaved(item, activeTab) ? '#FF4757' : 'none'}
+                                color={isSaved(item, activeTab) ? '#FF4757' : 'currentColor'}
+                              />
+                            </button>
+                            <button
+                              className={`icon-btn ${copiedId === cardId ? 'copied' : ''}`}
+                              onClick={() => handleCopy(item.content, cardId)}
+                              title="نسخ"
+                              aria-label="نسخ المحتوى"
+                            >
+                              {copiedId === cardId
+                                ? <Check size={18} color="#4ADE80" strokeWidth={2.5} />
+                                : <Copy size={18} strokeWidth={2} />
+                              }
+                            </button>
+                          </div>
+                        </div>
+                        <div className="result-card-body">{item.content}</div>
+                      </div>
+                    );
+                  })
+                )
               )}
             </div>
           </div>
