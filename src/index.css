@@ -40,6 +40,8 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+html { scroll-behavior: smooth; }
+
 body {
   font-family: 'Cairo', sans-serif;
   background: var(--bg);
@@ -152,26 +154,38 @@ body {
   display: flex;
   justify-content: flex-end;
   margin-bottom: 1.5rem;
+  margin-top: 1.5rem;
+  padding-right: 1rem;
+  padding-top: 1rem;
 }
 
 .theme-toggle {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
   background: var(--surface);
   border: 1px solid var(--border);
-  color: var(--text-muted);
-  padding: 0.5rem 1rem;
-  border-radius: 999px;
+  color: var(--primary);
+  border-radius: var(--radius-lg);
   cursor: pointer;
   font-family: inherit;
   font-size: 0.9rem;
   font-weight: 600;
-  transition: all 0.2s;
+  transition: all 0.3s;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
-.theme-toggle:hover { color: var(--primary); border-color: var(--primary); }
+.theme-toggle:hover {
+  color: var(--primary-dark);
+  border-color: var(--primary);
+  background: rgba(255, 159, 28, 0.1);
+  transform: scale(1.1);
+}
+.theme-toggle:active {
+  transform: scale(0.95);
+}
 
 .header-logo {
   display: inline-flex;
@@ -259,6 +273,28 @@ body {
   color: var(--text);
 }
 
+.help-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem 0.75rem;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: underline;
+  transition: all 0.2s;
+  border-radius: var(--radius-sm);
+}
+.help-btn:hover {
+  background: rgba(255, 159, 28, 0.1);
+  color: var(--primary-dark);
+  transform: scale(1.05);
+}
+
 .form-control {
   width: 100%;
   padding: 0.85rem 1.1rem;
@@ -277,6 +313,124 @@ body {
   box-shadow: 0 0 0 4px rgba(46, 196, 182, 0.15);
 }
 textarea.form-control { resize: vertical; min-height: 100px; line-height: 1.6; }
+
+/* ==========================================
+   Modal/Popup Styles
+   ========================================== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--surface-solid);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  max-width: 500px;
+  z-index: 1001;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+  color: var(--text);
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text);
+  flex: 1;
+}
+
+.modal-close-btn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.modal-close-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text);
+}
+
+[data-theme="dark"] .modal-close-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.modal-body {
+  line-height: 1.8;
+  font-size: 0.95rem;
+}
+
+.modal-body h3 {
+  color: var(--primary);
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+}
+
+.modal-body h3:first-child {
+  margin-top: 0;
+}
+
+.modal-body p {
+  margin: 0 0 1rem 0;
+  color: var(--text);
+  line-height: 1.6;
+}
+
+.modal-body p:last-child {
+  margin-bottom: 0;
+}
+
+/* RTL Scrollbar */
+[dir="rtl"] .modal-content {
+  direction: rtl;
+}
 
 /* ==========================================
    Configuration Panel (Checkboxes)

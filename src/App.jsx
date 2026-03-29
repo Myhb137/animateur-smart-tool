@@ -60,64 +60,35 @@ function InfoPopup({ isOpen, onClose }) {
       <div 
         className="modal-overlay" 
         onClick={onClose}
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}
       />
       <div 
         className="modal-content"
-        style={{
-          position: 'fixed',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          background: 'white',
-          borderRadius: '12px',
-          padding: '30px',
-          maxWidth: '500px',
-          zIndex: 1001,
-          maxHeight: '80vh',
-          overflow: 'auto',
-          boxShadow: '0 10px 40px rgba(0,0,0,0.2)'
-        }}
+        dir="rtl"
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h2 style={{ margin: 0, color: '#333' }}>🎭 كيفية الاستخدام</h2>
+        <div className="modal-header">
+          <h2>🎭 كيفية الاستخدام</h2>
           <button 
             onClick={onClose}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '5px'
-            }}
+            className="modal-close-btn"
+            aria-label="إغلاق"
           >
-            <X size={24} color="#666" />
+            <X size={24} />
           </button>
         </div>
-        <div style={{ lineHeight: '1.8', color: '#555', fontSize: '14px' }}>
-          <h3 style={{ color: '#667eea', marginTop: '15px' }}>1️⃣ أدخل الموضوع</h3>
+        <div className="modal-body">
+          <h3>1️⃣ أدخل الموضوع</h3>
           <p>اكتب عنوان النشاط أو الموضوع الذي تريد توليد محتوى له (مثل: رحلة البحث عن الكنز)</p>
           
-          <h3 style={{ color: '#667eea', marginTop: '15px' }}>2️⃣ اختياري: أضف وصف</h3>
+          <h3>2️⃣ اختياري: أضف وصف</h3>
           <p>أضف تفاصيل إضافية أو أهداف لتحسين نوعية المحتوى المولد</p>
           
-          <h3 style={{ color: '#667eea', marginTop: '15px' }}>3️⃣ خصص الإعدادات</h3>
+          <h3>3️⃣ خصص الإعدادات</h3>
           <p>اختر الفئة العمرية، البيئة، حجم المجموعة، وأنواع المحتوى المطلوب</p>
           
-          <h3 style={{ color: '#667eea', marginTop: '15px' }}>4️⃣ ولد الأفكار</h3>
+          <h3>4️⃣ ولد الأفكار</h3>
           <p>اضغط على الزر وسيتم توليد أغانٍ وألعاب وأنشطة احترافية</p>
           
-          <h3 style={{ color: '#667eea', marginTop: '15px' }}>5️⃣ احفظ المفضلة</h3>
+          <h3>5️⃣ احفظ المفضلة</h3>
           <p>اضغط على القلب لحفظ أفكارك المفضلة واستخدمها لاحقاً</p>
         </div>
       </div>
@@ -264,7 +235,7 @@ export default function App() {
     if (results && resultsRef.current) {
       setTimeout(() => {
         resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 300);
+      }, 100);
     }
   }, [results]);
 
@@ -362,10 +333,11 @@ export default function App() {
               className="theme-toggle"
               onClick={() => setTheme(t => t === 'light' ? 'dark' : 'light')}
               aria-label="تبديل الوضع"
+              title={theme === 'light' ? 'وضع مظلم' : 'وضع فاتح'}
             >
               {theme === 'light'
-                ? <><Moon size={16} /> وضع مظلم</>
-                : <><Sun  size={16} /> وضع فاتح</>
+                ? <Moon size={24} />
+                : <Sun size={24} />
               }
             </button>
           </div>
@@ -387,21 +359,11 @@ export default function App() {
           <form onSubmit={handleSubmit}>
             <div className="form-group">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <label htmlFor="activity-title">موضوع النشاط أو اسم اللعبة *</label>
+                <label htmlFor="activity-title">موضوع النشاط أو اسم اللعبة </label>
                 <button
                   type="button"
                   onClick={() => setShowInfo(true)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: '4px 8px',
-                    color: '#667eea',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    textDecoration: 'underline'
-                  }}
+                  className="help-btn"
                   title="كيفية الاستخدام"
                 >
                   <Info size={16} /> مساعدة
