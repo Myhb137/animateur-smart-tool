@@ -184,15 +184,13 @@ const TAB_CONFIG = [
 ];
 
 const AGE_OPTIONS = [
-  { value: '6-8 سنوات',   label: '6–8 سنوات',   Icon: Baby },
-  { value: '9-11 سنوات',  label: '9–11 سنوات',  Icon: User },
-  { value: '12-14 سنوات', label: '12–14 سنوات', Icon: UserCheck },
+  { value: '6-9 سنوات',   label: '6–9 سنوات',   Icon: Baby },
+  { value: '10-14 سنوات',  label: '10–14 سنوات',  Icon: User },
+  { value: '15-18 سنوات', label: '15–18 سنوات', Icon: UserCheck },
 ];
 const ENV_OPTIONS = [
   { value: 'شاطئ البحر',  label: 'شاطئ البحر',  Icon: Waves },
-  { value: 'غابة وطبيعة', label: 'غابة وطبيعة', Icon: Trees },
   { value: 'فضاء داخلي',  label: 'فضاء داخلي',  Icon: Home },
-  { value: 'جبال وتلال',  label: 'جبال وتلال',  Icon: Mountain },
 ];
 const SIZE_OPTIONS = [
   { value: 'مجموعة صغيرة (5-10)',   label: '5–10 أطفال',  Icon: Users },
