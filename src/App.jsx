@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Music, Gamepad2, Users, Snowflake,
   Tent, Sun, Moon, Sparkles, Settings, ChevronDown, ChevronUp,
@@ -7,9 +7,123 @@ import {
   UsersRound, Building2,
   Heart, Copy, Printer, Check,
   Smile, Drama, Loader2,
-  Star, Zap, Bookmark, Trash2
+  Star, Zap, Bookmark, Trash2, Info, X
 } from 'lucide-react';
 import { generateActivityContent } from './aiService';
+
+/* ── Splash Screen Component ─────────────────────── */
+function SplashScreen({ onComplete }) {
+  useEffect(() => {
+    const timer = setTimeout(onComplete, 2500);
+    return () => clearTimeout(timer);
+  }, [onComplete]);
+
+  return (
+    <div className="splash-screen" style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexDirection: 'column',
+      zIndex: 9999,
+      animation: 'fadeOut 0.5s ease-in 2s forwards'
+    }}>
+      <style>{`
+        @keyframes fadeOut {
+          from { opacity: 1; }
+          to { opacity: 0; visibility: hidden; }
+        }
+        @keyframes bounce { 
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.1); }
+        }
+      `}</style>
+      <Tent size={80} color="white" style={{ animation: 'bounce 1s infinite', marginBottom: '20px' }} />
+      <h1 style={{ color: 'white', fontSize: '32px', marginBottom: '10px', fontWeight: 'bold' }}>المنشط الذكي</h1>
+      <p style={{ color: 'rgba(255,255,255,0.9)', fontSize: '16px' }}>أداة ذكية لتوليد أنشطة المخيمات الصيفية</p>
+      <Loader2 size={30} color="white" style={{ marginTop: '30px', animation: 'spin 2s linear infinite' }} />
+    </div>
+  );
+}
+
+/* ── Info Popup Component ──────────────────────── */
+function InfoPopup({ isOpen, onClose }) {
+  if (!isOpen) return null;
+  
+  return (
+    <>
+      <div 
+        className="modal-overlay" 
+        onClick={onClose}
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}
+      />
+      <div 
+        className="modal-content"
+        style={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          background: 'white',
+          borderRadius: '12px',
+          padding: '30px',
+          maxWidth: '500px',
+          zIndex: 1001,
+          maxHeight: '80vh',
+          overflow: 'auto',
+          boxShadow: '0 10px 40px rgba(0,0,0,0.2)'
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <h2 style={{ margin: 0, color: '#333' }}>🎭 كيفية الاستخدام</h2>
+          <button 
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '5px'
+            }}
+          >
+            <X size={24} color="#666" />
+          </button>
+        </div>
+        <div style={{ lineHeight: '1.8', color: '#555', fontSize: '14px' }}>
+          <h3 style={{ color: '#667eea', marginTop: '15px' }}>1️⃣ أدخل الموضوع</h3>
+          <p>اكتب عنوان النشاط أو الموضوع الذي تريد توليد محتوى له (مثل: رحلة البحث عن الكنز)</p>
+          
+          <h3 style={{ color: '#667eea', marginTop: '15px' }}>2️⃣ اختياري: أضف وصف</h3>
+          <p>أضف تفاصيل إضافية أو أهداف لتحسين نوعية المحتوى المولد</p>
+          
+          <h3 style={{ color: '#667eea', marginTop: '15px' }}>3️⃣ خصص الإعدادات</h3>
+          <p>اختر الفئة العمرية، البيئة، حجم المجموعة، وأنواع المحتوى المطلوب</p>
+          
+          <h3 style={{ color: '#667eea', marginTop: '15px' }}>4️⃣ ولد الأفكار</h3>
+          <p>اضغط على الزر وسيتم توليد أغانٍ وألعاب وأنشطة احترافية</p>
+          
+          <h3 style={{ color: '#667eea', marginTop: '15px' }}>5️⃣ احفظ المفضلة</h3>
+          <p>اضغط على القلب لحفظ أفكارك المفضلة واستخدمها لاحقاً</p>
+        </div>
+      </div>
+    </>
+  );
+}
 
 /* ── Floating background icons ─────────────────────── */
 const BG_ICONS = [Music, Gamepad2, Tent, Star, Waves, Trees, Sparkles, Zap, Music, Snowflake, Users, Drama];
@@ -125,6 +239,8 @@ const CONTENT_OPTIONS = [
    Main App
    ══════════════════════════════════════════════════ */
 export default function App() {
+  const [showSplash, setShowSplash]   = useState(true);
+  const [showInfo, setShowInfo]       = useState(false);
   const [theme, setTheme]             = useState('light');
   const [title, setTitle]             = useState('');
   const [description, setDescription] = useState('');
@@ -141,6 +257,16 @@ export default function App() {
   const [copiedId, setCopiedId]     = useState(null);
   const [saved, setSaved]           = useState([]); // Array of saved items
   const [toast, setToast]           = useState('');
+  const resultsRef = useRef(null);
+
+  // Auto-scroll to results when they appear
+  useEffect(() => {
+    if (results && resultsRef.current) {
+      setTimeout(() => {
+        resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 300);
+    }
+  }, [results]);
 
   // Load saved items from localStorage on mount
   useEffect(() => {
@@ -225,10 +351,9 @@ export default function App() {
 
   return (
     <>
-      <BgCanvas />
-
-      <main className="app" dir="rtl">
-
+        <BgCanvas />
+        {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
+        <InfoPopup isOpen={showInfo} onClose={() => setShowInfo(false)} />
         {/* ── Header ──────────────────────────────── */}
         <header className="header">
           <div className="header-top">
@@ -252,6 +377,7 @@ export default function App() {
           <p>أداة مدعومة بالذكاء الاصطناعي لتوليد أغانٍ، ألعاب، وأنشطة لمخيماتك الصيفية!</p>
         </header>
 
+        <main className="app" dir="rtl">
         {/* ── Input Form ──────────────────────────── */}
         <div className="glass-card" style={{ marginBottom: '1.5rem' }}>
           <div className="section-label">
@@ -260,7 +386,27 @@ export default function App() {
 
           <form onSubmit={handleSubmit}>
             <div className="form-group">
-              <label htmlFor="activity-title">موضوع النشاط أو اسم اللعبة *</label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <label htmlFor="activity-title">موضوع النشاط أو اسم اللعبة *</label>
+                <button
+                  type="button"
+                  onClick={() => setShowInfo(true)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '4px 8px',
+                    color: '#667eea',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    textDecoration: 'underline'
+                  }}
+                  title="كيفية الاستخدام"
+                >
+                  <Info size={16} /> مساعدة
+                </button>
+              </div>
               <input
                 id="activity-title"
                 type="text"
@@ -325,15 +471,6 @@ export default function App() {
                       color="accent"
                     />
                   </div>
-                  <div className="config-section">
-                    <h4><Sparkles size={15} /> ماذا تريد أن يولّد الذكاء الاصطناعي؟</h4>
-                    <ChipGroup
-                      options={CONTENT_OPTIONS}
-                      selected={contentTypes}
-                      onToggle={v => toggleArr(contentTypes, setContentTypes, v)}
-                      color="danger"
-                    />
-                  </div>
                 </div>
               )}
             </div>
@@ -369,7 +506,7 @@ export default function App() {
 
         {/* ── Results ─────────────────────────────── */}
         {results && !isLoading && (
-          <div className="results-wrapper">
+          <div className="results-wrapper" ref={resultsRef} style={{ scrollMarginTop: '20px' }}>
             <div className="results-header">
               <div className="results-title">
                 <Check size={18} strokeWidth={2.5} />
