@@ -7,7 +7,8 @@ import {
   UsersRound, Building2,
   Heart, Copy, Printer, Check,
   Smile, Drama, Loader2,
-  Star, Zap, Bookmark, Trash2, Info, X
+  Star, Zap, Bookmark, Trash2, Info, X,
+  FileJson, BarChart3, Flame, Share2
 } from 'lucide-react';
 import { generateActivityContent } from './aiService';
 
@@ -218,7 +219,6 @@ export default function App() {
   const [ageGroups, setAgeGroups]       = useState([]);
   const [environments, setEnvironments] = useState([]);
   const [groupSize, setGroupSize]       = useState('');
-  const [contentTypes, setContentTypes] = useState(['songs','games','activities','plays','icebreakers']);
 
   const [isLoading, setIsLoading]   = useState(false);
   const [results, setResults]       = useState(null);
@@ -226,6 +226,29 @@ export default function App() {
   const [copiedId, setCopiedId]     = useState(null);
   const [saved, setSaved]           = useState([]); // Array of saved items
   const [toast, setToast]           = useState('');
+  const [ratings, setRatings]       = useState({}); // Item ID -> rating (1-5)
+  const [favorites, setFavorites]   = useState({}); // Item ID -> boolean
+  const [generationCount, setGenerationCount] = useState(0);
+  const [showStats, setShowStats]   = useState(false);
+  const [loadingPhase, setLoadingPhase] = useState(0); // For loading animation phases
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [showWelcomePopup, setShowWelcomePopup] = useState(false);
+  const [toastType, setToastType] = useState('info'); // 'success', 'error', 'info'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   const resultsRef = useRef(null);
 
   // Auto-scroll to results when they appear
@@ -237,22 +260,76 @@ export default function App() {
     }
   }, [results]);
 
-  // Load saved items from localStorage on mount
+  // Loading phase animation
+  useEffect(() => {
+    if (!isLoading) return;
+    const interval = setInterval(() => {
+      setLoadingPhase(prev => (prev + 1) % 4);
+    }, 1500);
+    return () => clearInterval(interval);
+  }, [isLoading]);
+
+  // Show success popup after results
+  useEffect(() => {
+    if (results && !isLoading) {
+      setShowSuccessPopup(true);
+      setTimeout(() => setShowSuccessPopup(false), 3500);
+    }
+  }, [results, isLoading]);
+
+  // Load all data from localStorage on mount
   useEffect(() => {
     const stored = localStorage.getItem('animateur_saved_items');
     if (stored) {
       try {
         setSaved(JSON.parse(stored));
-      } catch (err) {
-        console.warn('Failed to load saved items:', err);
+      } catch (error) {
+        console.warn('Failed to load saved items:', error);
       }
+    }
+    const storedRatings = localStorage.getItem('animateur_ratings');
+    if (storedRatings) {
+      try {
+        setRatings(JSON.parse(storedRatings));
+      } catch (error) {
+        console.warn('Failed to load ratings:', error);
+      }
+    }
+    const storedFavorites = localStorage.getItem('animateur_favorites');
+    if (storedFavorites) {
+      try {
+        setFavorites(JSON.parse(storedFavorites));
+      } catch (error) {
+        console.warn('Failed to load favorites:', error);
+      }
+    }
+    const count = localStorage.getItem('animateur_generation_count');
+    if (count) setGenerationCount(parseInt(count, 10));
+    
+    // Show welcome popup if first visit (or on fresh load)
+    const hasVisited = localStorage.getItem('animateur_visited');
+    if (!hasVisited) {
+      setShowWelcomePopup(true);
+      localStorage.setItem('animateur_visited', 'true');
     }
   }, []);
 
-  // Save to localStorage whenever saved changes
+  // Save to localStorage whenever data changes
   useEffect(() => {
     localStorage.setItem('animateur_saved_items', JSON.stringify(saved));
   }, [saved]);
+
+  useEffect(() => {
+    localStorage.setItem('animateur_ratings', JSON.stringify(ratings));
+  }, [ratings]);
+
+  useEffect(() => {
+    localStorage.setItem('animateur_favorites', JSON.stringify(favorites));
+  }, [favorites]);
+
+  useEffect(() => {
+    localStorage.setItem('animateur_generation_count', generationCount.toString());
+  }, [generationCount]);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -260,6 +337,24 @@ export default function App() {
 
   const toggleArr = (arr, set, val) =>
     set(arr.includes(val) ? arr.filter(v => v !== val) : [...arr, val]);
+
+  // Loading tips that rotate
+  const loadingTips = [
+    '💡 اطلب أنشطة مخصصة حسب الفئة العمرية',
+    '🎨 يمكنك إضافة وصف تفصيلي لتحسين النتائج',
+    '⭐ لا تنسى تقييم وحفظ أفضل الأنشطة!',
+    '📱 استخدم الهاتف للوصول السريع لمحفوظاتك'
+  ];
+
+  const getLoadingMessage = () => {
+    const messages = [
+      'جاري البحث في قاعدة الأنشطة...',
+      'يتم تحليل متطلباتك...',
+      'جاري إنشاء محتوى فريد...',
+      'شبه تمام! ⏰'
+    ];
+    return messages[loadingPhase];
+  };
 
   const handleCopy = useCallback((text, id) => {
     navigator.clipboard.writeText(text);
@@ -273,10 +368,10 @@ export default function App() {
     
     if (isSaved) {
       setSaved(saved.filter(s => s.id !== itemId));
-      showToast('تم الحذف من المحفوظات');
+      showToast('تم الحذف من المحفوظات', 'info');
     } else {
       setSaved([...saved, { id: itemId, type, item, savedAt: new Date().toISOString() }]);
-      showToast('تم الحفظ بنجاح! ✓');
+      showToast('تم الحفظ بنجاح! ✓', 'success');
     }
   }, [saved]);
 
@@ -286,12 +381,13 @@ export default function App() {
 
   const removeSaved = useCallback((id) => {
     setSaved(saved.filter(s => s.id !== id));
-    showToast('تم الحذف من المحفوظات');
+    showToast('تم الحذف من المحفوظات', 'info');
   }, [saved]);
 
-  const showToast = (msg) => {
+  const showToast = (msg, type = 'info') => {
     setToast(msg);
-    setTimeout(() => setToast(''), 4000);
+    setToastType(type);
+    setTimeout(() => setToast(''), 3500);
   };
 
   const handleSubmit = async (e) => {
@@ -300,19 +396,78 @@ export default function App() {
     setIsLoading(true);
     setResults(null);
     try {
+      const contentTypes = ['songs','games','activities','plays','icebreakers'];
       const data = await generateActivityContent(title, description, {
         ageGroups, environments, groupSize, contentTypes,
       });
       setResults(data);
+      setGenerationCount(prev => prev + 1);
       const firstAvail = contentTypes.find(k => data[k]?.length > 0) || 'songs';
       setActiveTab(firstAvail);
       setTitle('');
       setDescription('');
-    } catch (err) {
-      showToast('حدث خطأ. تحقق من مفتاح API والاتصال بالإنترنت.');
+    } catch (error) {
+      showToast('حدث خطأ. تحقق من مفتاح API والاتصال بالإنترنت.', 'error');
+      console.warn('Generation error:', error);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Rate a saved item (1-5 stars)
+  const rateItem = (itemId, rating) => {
+    setRatings(prev => ({
+      ...prev,
+      [itemId]: rating === prev[itemId] ? 0 : rating
+    }));
+    if (rating !== ratings[itemId]) {
+      showToast(`⭐ تصنيف: ${rating} نجوم`, 'success');
+    }
+  };
+
+  // Toggle favorite status
+  const toggleFavorite = (itemId) => {
+    setFavorites(prev => ({
+      ...prev,
+      [itemId]: !prev[itemId]
+    }));
+    showToast(favorites[itemId] ? '💔 تم إزالة من المفضلات' : '❤️ تم إضافة للمفضلات', 'success');
+  };
+
+  // Extract difficulty from content
+  const getDifficulty = (content) => {
+    const easy = ['سهل', 'بسيط', 'صغار', '6-9'];
+    const hard = ['صعب', 'معقد', 'متقدم', 'كبار', '15-18'];
+    const lower = content.toLowerCase();
+    if (hard.some(word => lower.includes(word))) return 'صعب';
+    if (easy.some(word => lower.includes(word))) return 'سهل';
+    return 'متوسط';
+  };
+
+  // Get difficulty color
+  const getDifficultyColor = (difficulty) => {
+    if (difficulty === 'سهل') return '#4ADE80';
+    if (difficulty === 'صعب') return '#FF4757';
+    return '#FFB74D';
+  };
+
+  // Export to file
+  const exportFile = () => {
+    const content = saved.map(item => 
+      `${item.item.title}\n${item.item.content}\n---\n`
+    ).join('\n');
+    const element = document.createElement('a');
+    element.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content);
+    element.download = `انشطة-${new Date().toISOString().split('T')[0]}.txt`;
+    element.click();
+    showToast('✓ تم تحميل الملف بنجاح', 'success');
+  };
+
+  // Share activity
+  const shareActivity = (item) => {
+    const text = `شارك معك: ${item.title}\n\n${item.content}`;
+    navigator.clipboard.writeText(text);
+    showToast('✓ تم النسخ للمشاركة', 'success');
   };
 
   const currentItems = results?.[activeTab] ?? [];
@@ -327,6 +482,15 @@ export default function App() {
         <header className="header">
           <div className="header-top">
             <button
+              id="stats-btn"
+              style={{ position: 'relative', background: 'none', border: 'none', color: 'var(--text)', cursor: 'pointer', padding: '0.5rem', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              onClick={() => setShowStats(!showStats)}
+              title="الإحصائيات"
+            >
+              <BarChart3 size={24} />
+              {generationCount > 0 && <span style={{ position: 'absolute', top: '-5px', right: '-5px', background: '#FF4757', color: 'white', fontSize: '0.65rem', fontWeight: '700', padding: '2px 6px', borderRadius: '10px' }}>{generationCount}</span>}
+            </button>
+            <button
               id="theme-toggle-btn"
               className="theme-toggle"
               onClick={() => setTheme(t => t === 'light' ? 'dark' : 'light')}
@@ -339,6 +503,23 @@ export default function App() {
               }
             </button>
           </div>
+          {showStats && (
+            <div style={{
+              background: 'var(--surface)',
+              border: '1px solid var(--border)',
+              borderRadius: '12px',
+              padding: '1rem',
+              marginTop: '1rem',
+              textAlign: 'right',
+              animation: 'slideDown 0.3s ease-out'
+            }}>
+              <div style={{ marginBottom: '0.5rem' }}>📊 <strong>الإحصائيات</strong></div>
+              <div style={{ fontSize: '0.9rem', marginBottom: '0.25rem' }}>🎯 إجمالي النشاطات: {generationCount}</div>
+              <div style={{ fontSize: '0.9rem', marginBottom: '0.25rem' }}>💾 المحفوظة: {saved.length}</div>
+              <div style={{ fontSize: '0.9rem', marginBottom: '0.25rem' }}>⭐ المقيمة: {Object.values(ratings).filter(r => r > 0).length}</div>
+              <div style={{ fontSize: '0.9rem' }}>❤️ المفضلات: {Object.values(favorites).filter(f => f).length}</div>
+            </div>
+          )}
 
           <div className="header-logo" role="img" aria-label="خيمة">
             <Tent size={36} color="#fff" strokeWidth={1.8} />
@@ -439,7 +620,7 @@ export default function App() {
               id="generate-btn"
               type="submit"
               className="btn-generate"
-              disabled={isLoading || !title.trim() || contentTypes.length === 0}
+              disabled={isLoading || !title.trim()}
             >
               {isLoading
                 ? <><Loader2 size={20} className="spin" /> جاري التوليد...</>
@@ -449,18 +630,171 @@ export default function App() {
           </form>
         </div>
 
-        {/* ── Loading ─────────────────────────────── */}
+        {/* ── Loading Popup ─────────────────────────── */}
         {isLoading && (
-          <div className="glass-card loading-card">
-            <div className="loading-icons">
-              <Music size={32} className="bounce-1" color="#FF9F1C" />
-              <Gamepad2 size={32} className="bounce-2" color="#2EC4B6" />
-              <Drama size={32} className="bounce-3" color="#A78BFA" />
-              <Snowflake size={32} className="bounce-4" color="#FF6B6B" />
+          <>
+            <div style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0, 0, 0, 0.5)',
+              backdropFilter: 'blur(4px)',
+              zIndex: 1000,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              animation: 'fadeIn 0.3s ease-out'
+            }} />
+            <div style={{
+              position: 'fixed',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              background: 'var(--surface)',
+              border: '2px solid var(--primary)',
+              borderRadius: '20px',
+              padding: '2.5rem',
+              zIndex: 1001,
+              textAlign: 'center',
+              maxWidth: '400px',
+              animation: 'popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+              boxShadow: '0 25px 50px rgba(255, 159, 28, 0.3)'
+            }}>
+              <style>{`
+                @keyframes fadeIn {
+                  from { opacity: 0; }
+                  to { opacity: 1; }
+                }
+                @keyframes popIn {
+                  0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+                  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+                }
+                @keyframes pulse-scale {
+                  0%, 100% { transform: scale(1); }
+                  50% { transform: scale(1.1); }
+                }
+                @keyframes orbit {
+                  0% { transform: rotate(0deg) translateX(40px) rotate(0deg); }
+                  100% { transform: rotate(360deg) translateX(40px) rotate(-360deg); }
+                }
+              `}</style>
+              
+              {/* Animated icons orbit */}
+              <div style={{ position: 'relative', width: '120px', height: '120px', margin: '0 auto 1.5rem' }}>
+                <div style={{
+                  position: 'absolute',
+                  width: '100%',
+                  height: '100%',
+                  animation: 'orbit 3s linear infinite'
+                }}>
+                  <Music size={32} color="#FF9F1C" style={{ position: 'absolute', top: '0', left: '50%', marginLeft: '-16px' }} />
+                </div>
+                <div style={{
+                  position: 'absolute',
+                  width: '100%',
+                  height: '100%',
+                  animation: 'orbit 3s linear infinite',
+                  animationDelay: '-0.75s'
+                }}>
+                  <Gamepad2 size={32} color="#2EC4B6" style={{ position: 'absolute', top: '0', left: '50%', marginLeft: '-16px' }} />
+                </div>
+                <div style={{
+                  position: 'absolute',
+                  width: '100%',
+                  height: '100%',
+                  animation: 'orbit 3s linear infinite',
+                  animationDelay: '-1.5s'
+                }}>
+                  <Drama size={32} color="#A78BFA" style={{ position: 'absolute', top: '0', left: '50%', marginLeft: '-16px' }} />
+                </div>
+                <div style={{
+                  position: 'absolute',
+                  width: '100%',
+                  height: '100%',
+                  animation: 'orbit 3s linear infinite',
+                  animationDelay: '-2.25s'
+                }}>
+                  <Sparkles size={32} color="#FF6B6B" style={{ position: 'absolute', top: '0', left: '50%', marginLeft: '-16px' }} />
+                </div>
+              </div>
+
+              <h2 style={{ margin: '0 0 0.5rem', fontSize: '1.3rem', color: 'var(--text)' }}>
+                {getLoadingMessage()}
+              </h2>
+              <p style={{ margin: '0 0 1.5rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                لا تقفل الصفحة... جاري العمل 🔄
+              </p>
+
+              {/* Loading bar */}
+              <div style={{
+                background: 'var(--border)',
+                height: '6px',
+                borderRadius: '3px',
+                overflow: 'hidden',
+                marginBottom: '1.5rem'
+              }}>
+                <div style={{
+                  background: `linear-gradient(90deg, var(--primary), var(--secondary))`,
+                  height: '100%',
+                  borderRadius: '3px',
+                  animation: 'progress 2s ease-in-out infinite',
+                  width: '30%'
+                }} />
+              </div>
+
+              {/* Rotating tip */}
+              <div style={{
+                background: 'rgba(255, 159, 28, 0.1)',
+                border: '1px solid rgba(255, 159, 28, 0.3)',
+                borderRadius: '10px',
+                padding: '1rem',
+                animation: 'fadeIn 0.5s ease-out'
+              }}>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text)' }}>
+                  💬 {loadingTips[loadingPhase]}
+                </p>
+              </div>
             </div>
-            <div className="loading-text">الذكاء الاصطناعي يبتكر لك...</div>
-            <div className="loading-sub">يتم الآن توليد أغانٍ وألعاب وأنشطة مخصصة لمخيمك</div>
-            <div className="progress-bar"><div className="progress-fill" /></div>
+
+            <style>{`
+              @keyframes progress {
+                0% { width: 30%; }
+                50% { width: 70%; }
+                100% { width: 30%; }
+              }
+            `}</style>
+          </>
+        )}
+
+        {/* ── Success Popup ─────────────────────────── */}
+        {showSuccessPopup && (
+          <div style={{
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            background: 'linear-gradient(135deg, #4ADE80 0%, #22c55e 100%)',
+            borderRadius: '20px',
+            padding: '2rem',
+            zIndex: 1002,
+            textAlign: 'center',
+            maxWidth: '350px',
+            color: 'white',
+            animation: 'popInSuccess 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            boxShadow: '0 25px 50px rgba(74, 222, 128, 0.4)'
+          }}>
+            <style>{`
+              @keyframes popInSuccess {
+                0% { transform: translate(-50%, -50%) scale(0.3) rotate(-20deg); opacity: 0; }
+                100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1; }
+              }
+              @keyframes slideOutSuccess {
+                0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+                100% { opacity: 0; transform: translate(-50%, -50%) scale(0.3) translateY(-50px); }
+              }
+            `}</style>
+            <Check size={48} style={{ marginBottom: '1rem', animation: 'pulse-scale 0.6s ease-in-out' }} />
+            <h2 style={{ margin: '0 0 0.5rem', fontSize: '1.3rem' }}>تم بنجاح! 🎉</h2>
+            <p style={{ margin: 0, opacity: 0.95, fontSize: '0.9rem' }}>تم توليد نشاطاتك بنجاح. استمتع بالمحتوى!</p>
           </div>
         )}
 
@@ -511,44 +845,97 @@ export default function App() {
                     <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>احفظ أغانيك وألعابك المفضلة هنا!</p>
                   </div>
                 ) : (
-                  saved.map((savedItem, idx) => {
-                    const meta = Object.fromEntries(TAB_CONFIG.map(t => [t.key, t]))[savedItem.type];
-                    return (
-                      <div key={savedItem.id} className="result-card" style={{ animationDelay: `${idx * 0.08}s` }}>
-                        <div className="result-card-header">
-                          <div className="result-card-icon" style={{ background: `${meta.color}22` }}>
-                            <meta.Icon size={20} color={meta.color} strokeWidth={2} />
+                  <>
+                    {saved.length > 0 && (
+                      <button
+                        onClick={exportFile}
+                        style={{
+                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                          color: 'white',
+                          border: 'none',
+                          padding: '0.5rem 1rem',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          marginBottom: '1rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          fontWeight: '600'
+                        }}
+                      >
+                        <FileJson size={16} /> تحميل جميع الملفات
+                      </button>
+                    )}
+                    {saved.map((savedItem, idx) => {
+                      const meta = Object.fromEntries(TAB_CONFIG.map(t => [t.key, t]))[savedItem.type];
+                      const difficulty = getDifficulty(savedItem.item.content);
+                      const isFav = favorites[savedItem.id];
+                      const itemRating = ratings[savedItem.id] || 0;
+                      return (
+                        <div key={savedItem.id} className="result-card" style={{ animationDelay: `${idx * 0.08}s` }}>
+                          <div className="result-card-header">
+                            <div className="result-card-icon" style={{ background: `${meta.color}22` }}>
+                              <meta.Icon size={20} color={meta.color} strokeWidth={2} />
+                            </div>
+                            <div className="result-card-title">{savedItem.item.title}</div>
+                            <div className="result-card-actions">
+                              <button
+                                className="icon-btn"
+                                onClick={() => toggleFavorite(savedItem.id)}
+                                title={isFav ? "إزالة من المفضلات" : "إضافة للمفضلات"}
+                              >
+                                <Heart size={18} fill={isFav ? '#FF4757' : 'none'} color={isFav ? '#FF4757' : 'currentColor'} strokeWidth={2} />
+                              </button>
+                              <button
+                                className="icon-btn"
+                                onClick={() => shareActivity(savedItem.item)}
+                                title="مشاركة"
+                              >
+                                <Share2 size={18} strokeWidth={2} />
+                              </button>
+                              <button
+                                className="icon-btn"
+                                onClick={() => handleCopy(savedItem.item.content, savedItem.id)}
+                                title="نسخ"
+                              >
+                                {copiedId === savedItem.id
+                                  ? <Check size={18} color="#4ADE80" strokeWidth={2.5} />
+                                  : <Copy size={18} strokeWidth={2} />
+                                }
+                              </button>
+                              <button
+                                className="icon-btn"
+                                onClick={() => removeSaved(savedItem.id)}
+                                title="حذف"
+                              >
+                                <Trash2 size={18} strokeWidth={2} color="#FF6B6B" />
+                              </button>
+                            </div>
                           </div>
-                          <div className="result-card-title">{savedItem.item.title}</div>
-                          <div className="result-card-actions">
-                            <button
-                              className="icon-btn"
-                              onClick={() => handleCopy(savedItem.item.content, savedItem.id)}
-                              title="نسخ"
-                              aria-label="نسخ المحتوى"
-                            >
-                              {copiedId === savedItem.id
-                                ? <Check size={18} color="#4ADE80" strokeWidth={2.5} />
-                                : <Copy size={18} strokeWidth={2} />
-                              }
-                            </button>
-                            <button
-                              className="icon-btn"
-                              onClick={() => removeSaved(savedItem.id)}
-                              title="حذف"
-                              aria-label="حذف من المحفوظات"
-                            >
-                              <Trash2 size={18} strokeWidth={2} color="#FF6B6B" />
-                            </button>
+                          <div className="result-card-body">{savedItem.item.content}</div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border)' }}>
+                            <div style={{ display: 'flex', gap: '0.25rem' }}>
+                              {[1, 2, 3, 4, 5].map(star => (
+                                <button
+                                  key={star}
+                                  onClick={() => rateItem(savedItem.id, star)}
+                                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem', display: 'flex' }}
+                                >
+                                  <Star size={16} fill={star <= itemRating ? '#FFD700' : 'none'} color={star <= itemRating ? '#FFD700' : '#ccc'} />
+                                </button>
+                              ))}
+                            </div>
+                            <div style={{ fontSize: '0.8rem', fontWeight: '600', color: getDifficultyColor(difficulty), display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <Flame size={14} /> {difficulty}
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                              {new Date(savedItem.savedAt).toLocaleDateString('ar-DZ')}
+                            </div>
                           </div>
                         </div>
-                        <div className="result-card-body">{savedItem.item.content}</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-                          محفوظ: {new Date(savedItem.savedAt).toLocaleDateString('ar-DZ')}
-                        </div>
-                      </div>
-                    );
-                  })
+                      );
+                    })}
+                  </>
                 )
               ) : (
                 // Results view
@@ -606,7 +993,107 @@ export default function App() {
         )}
       </main>
 
-      {toast && <div className="toast" role="alert">{toast}</div>}
+      {toast && (
+        <div 
+          className="toast" 
+          role="alert"
+          style={{
+            background: toastType === 'success' ? '#4ADE80' : toastType === 'error' ? '#FF4757' : '#3B82F6',
+            animation: 'toastSlide 0.3s ease-out, toastSlideOut 0.3s ease-out 3.2s forwards'
+          }}
+        >
+          {toastType === 'success' ? '✓ ' : toastType === 'error' ? '✕ ' : 'ℹ '}{toast}
+        </div>
+      )}
+
+      {/* Welcome Popup */}
+      {showWelcomePopup && (
+        <>
+          <div style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.6)',
+            backdropFilter: 'blur(6px)',
+            zIndex: 2000,
+            animation: 'fadeIn 0.3s ease-out'
+          }} onClick={() => setShowWelcomePopup(false)} />
+          <div style={{
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            background: `linear-gradient(135deg, var(--surface) 0%, rgba(255, 159, 28, 0.05) 100%)`,
+            border: '2px solid var(--primary)',
+            borderRadius: '24px',
+            padding: '2rem',
+            zIndex: 2001,
+            maxWidth: '420px',
+            animation: 'popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            boxShadow: '0 30px 60px rgba(0, 0, 0, 0.3)',
+            textAlign: 'right',
+            dir: 'rtl'
+          }}>
+            <button
+              onClick={() => setShowWelcomePopup(false)}
+              style={{
+                float: 'left',
+                background: 'none',
+                border: 'none',
+                fontSize: '1.5rem',
+                cursor: 'pointer',
+                color: 'var(--text-muted)'
+              }}
+            >
+              ✕
+            </button>
+            <div style={{ marginBottom: '1rem', fontSize: '2.5rem' }}>🎉</div>
+            <h2 style={{ margin: '0 0 0.5rem', fontSize: '1.5rem', color: 'var(--text)' }}>مرحباً بك!</h2>
+            <p style={{ margin: '0 0 1rem', color: 'var(--text-muted)', lineHeight: '1.6' }}>
+              أنت جاهز الآن لتوليد نشاطات مخيم رائعة بقوة الذكاء الاصطناعي.
+            </p>
+            <div style={{ background: 'rgba(255, 159, 28, 0.1)', borderRadius: '12px', padding: '1rem', marginBottom: '1rem' }}>
+              <div style={{ marginBottom: '0.75rem', fontWeight: '600', color: 'var(--primary)' }}>✨ ماذا يمكنك فعله؟</div>
+              <ul style={{ margin: 0, paddingRight: '1.5rem', fontSize: '0.9rem', lineHeight: '1.8', color: 'var(--text)' }}>
+                <li>توليد أغاني وألعاب وأنشطة مخيم احترافية</li>
+                <li>حفظ وتقييم أفضل الأنشطة برتب نجوم</li>
+                <li>تحميل كل الأنشطة المحفوظة دفعة واحدة</li>
+                <li>مراقبة إحصائيات نشاطاتك</li>
+              </ul>
+            </div>
+            <button
+              onClick={() => setShowWelcomePopup(false)}
+              style={{
+                width: '100%',
+                background: 'linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%)',
+                color: 'white',
+                border: 'none',
+                padding: '0.75rem',
+                borderRadius: '10px',
+                fontSize: '1rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'transform 0.2s',
+                boxShadow: '0 4px 15px rgba(255, 159, 28, 0.3)'
+              }}
+              onMouseOver={e => e.target.style.transform = 'translateY(-2px)'}
+              onMouseOut={e => e.target.style.transform = 'translateY(0)'}
+            >
+              ابدأ الآن 🚀
+            </button>
+          </div>
+        </>
+      )}
+
+      <style>{`
+        @keyframes toastSlide {
+          from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+          to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        @keyframes toastSlideOut {
+          from { opacity: 1; transform: translateX(-50%) translateY(0); }
+          to { opacity: 0; transform: translateX(-50%) translateY(40px); }
+        }
+      `}</style>
     </>
   );
 }

@@ -39,7 +39,6 @@ export const generateActivityContent = async (title, description, options = {}) 
     ageGroups = [],
     environments = [],
     groupSize = "",
-    contentTypes = ["songs", "games", "activities", "plays", "icebreakers"],
   } = options;
 
   const contextLines = [
