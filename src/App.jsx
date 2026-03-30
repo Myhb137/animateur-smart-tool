@@ -8,7 +8,7 @@ import {
   Heart, Copy, Printer, Check,
   Smile, Drama, Loader2,
   Star, Zap, Bookmark, Trash2, Info, X,
-  FileJson, BarChart3, Flame, Share2
+  FileJson, BarChart3, Flame, Share2, ArrowRight, Wand2, Lightbulb, Award
 } from 'lucide-react';
 import { generateActivityContent } from './aiService';
 
@@ -48,6 +48,155 @@ function SplashScreen({ onComplete }) {
       <h1 style={{ color: 'white', fontSize: '32px', marginBottom: '10px', fontWeight: 'bold' }}>المنشط الذكي</h1>
       <p style={{ color: 'rgba(255,255,255,0.9)', fontSize: '16px' }}>أداة ذكية لتوليد أنشطة المخيمات الصيفية</p>
       <Loader2 size={30} color="white" style={{ marginTop: '30px', animation: 'spin 2s linear infinite' }} />
+    </div>
+  );
+}
+
+/* ── Modern Landing Page ───────────────────────── */
+function LandingPage({ onStart }) {
+  return (
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      textAlign: 'center',
+      padding: '2rem',
+      position: 'relative',
+      zIndex: 1
+    }}>
+      {/* Hero Section */}
+      <div style={{
+        maxWidth: '700px',
+        animation: 'slideUp 0.8s ease-out'
+      }}>
+        <div style={{
+          display: 'inline-block',
+          background: 'linear-gradient(135deg, var(--primary), var(--accent-2))',
+          padding: '0.75rem 1.5rem',
+          borderRadius: '50px',
+          marginBottom: '1.5rem',
+          color: 'white',
+          fontWeight: '700',
+          fontSize: '0.85rem',
+          letterSpacing: '0.05em',
+          animation: 'fadeInDown 0.8s ease-out'
+        }}>
+          ✨ مدعوم بالذكاء الاصطناعي
+        </div>
+
+        <h1 style={{
+          fontSize: 'clamp(2.5rem, 10vw, 4.5rem)',
+          fontWeight: '800',
+          marginBottom: '1.5rem',
+          background: 'linear-gradient(135deg, var(--primary), var(--accent-2), var(--secondary))',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+          animation: 'fadeInDown 0.8s ease-out 0.1s backwards',
+          lineHeight: '1.2'
+        }}>
+          توليد أنشطة مخيم رائعة بلمسة واحدة
+        </h1>
+
+        <p style={{
+          fontSize: '1.15rem',
+          color: 'var(--text-muted)',
+          marginBottom: '2.5rem',
+          lineHeight: '1.8',
+          animation: 'fadeInDown 0.8s ease-out 0.2s backwards'
+        }}>
+          استخدم قوة الذكاء الاصطناعي لتوليد أغاني وألعاب وأنشطة احترافية لمخيماتك الصيفية. مخصصة حسب الفئة العمرية والبيئة وحجم المجموعة.
+        </p>
+
+        {/* Features Grid */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '1.5rem',
+          marginBottom: '2.5rem',
+          animation: 'fadeInUp 0.8s ease-out 0.3s backwards'
+        }}>
+          {[
+            { icon: Wand2, title: 'توليد فوري', desc: 'أنشطة احترافية في ثوانٍ' },
+            { icon: Award, title: 'مخصصة', desc: 'حسب احتياجات مخيمك' },
+            { icon: Lightbulb, title: 'أفكار إبداعية', desc: 'محتوى عالي الجودة' }
+          ].map((feat, idx) => (
+            <div key={idx} style={{
+              background: 'var(--surface)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-lg)',
+              padding: '1.5rem',
+              backdropFilter: 'blur(10px)',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              cursor: 'pointer',
+              animation: `slideUp 0.6s ease-out ${0.4 + idx * 0.1}s backwards`
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.transform = 'translateY(-8px)';
+              e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
+              e.currentTarget.style.borderColor = 'var(--primary)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+              e.currentTarget.style.borderColor = 'var(--border)';
+            }}>
+              <feat.icon size={32} color="var(--primary)" style={{ marginBottom: '0.75rem' }} />
+              <h3 style={{ margin: '0.5rem 0 0.25rem', fontWeight: '700', color: 'var(--text)' }}>{feat.title}</h3>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>{feat.desc}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* CTA Button */}
+        <button
+          onClick={onStart}
+          style={{
+            background: 'linear-gradient(135deg, var(--primary), var(--primary-light))',
+            color: 'white',
+            border: 'none',
+            padding: '1.2rem 2.5rem',
+            borderRadius: 'var(--radius-lg)',
+            fontFamily: 'inherit',
+            fontSize: '1.05rem',
+            fontWeight: '700',
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            boxShadow: '0 12px 40px rgba(255, 159, 28, 0.35)',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            animation: 'slideUp 0.8s ease-out 0.4s backwards'
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.transform = 'scale(1.08) translateY(-3px)';
+            e.currentTarget.style.boxShadow = '0 20px 50px rgba(255, 159, 28, 0.45)';
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.transform = 'scale(1)';
+            e.currentTarget.style.boxShadow = '0 12px 40px rgba(255, 159, 28, 0.35)';
+          }}
+        >
+          ابدأ الآن <ArrowRight size={20} />
+        </button>
+      </div>
+
+      <style>{`
+        @keyframes slideUp {
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeInDown {
+          from { opacity: 0; transform: translateY(-20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }
@@ -210,6 +359,7 @@ const CONTENT_OPTIONS = [
    ══════════════════════════════════════════════════ */
 export default function App() {
   const [showSplash, setShowSplash]   = useState(true);
+  const [showLanding, setShowLanding] = useState(true);
   const [showInfo, setShowInfo]       = useState(false);
   const [theme, setTheme]             = useState('light');
   const [title, setTitle]             = useState('');
@@ -265,7 +415,7 @@ export default function App() {
     if (!isLoading) return;
     const interval = setInterval(() => {
       setLoadingPhase(prev => (prev + 1) % 4);
-    }, 1500);
+    }, 1000);
     return () => clearInterval(interval);
   }, [isLoading]);
 
@@ -273,7 +423,7 @@ export default function App() {
   useEffect(() => {
     if (results && !isLoading) {
       setShowSuccessPopup(true);
-      setTimeout(() => setShowSuccessPopup(false), 3500);
+      setTimeout(() => setShowSuccessPopup(false), 2500);
     }
   }, [results, isLoading]);
 
@@ -359,7 +509,7 @@ export default function App() {
   const handleCopy = useCallback((text, id) => {
     navigator.clipboard.writeText(text);
     setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
+    setTimeout(() => setCopiedId(null), 1500);
   }, []);
 
   const toggleSave = useCallback((item, type) => {
@@ -387,7 +537,7 @@ export default function App() {
   const showToast = (msg, type = 'info') => {
     setToast(msg);
     setToastType(type);
-    setTimeout(() => setToast(''), 3500);
+    setTimeout(() => setToast(''), 2500);
   };
 
   const handleSubmit = async (e) => {
@@ -477,6 +627,11 @@ export default function App() {
     <>
         <BgCanvas />
         {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
+        {showLanding && !showSplash && (
+          <LandingPage onStart={() => setShowLanding(false)} />
+        )}
+        {!showLanding && (
+          <>
         <InfoPopup isOpen={showInfo} onClose={() => setShowInfo(false)} />
         {/* ── Header ──────────────────────────────── */}
         <header className="header">
@@ -530,104 +685,143 @@ export default function App() {
 
         <main className="app" dir="rtl">
         {/* ── Input Form ──────────────────────────── */}
-        <div className="glass-card" style={{ marginBottom: '1.5rem' }}>
-          <div className="section-label">
-            <Sparkles size={14} /> وصف النشاط
-          </div>
-
-          <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <label htmlFor="activity-title">موضوع النشاط أو اسم اللعبة </label>
-                <button
-                  type="button"
-                  onClick={() => setShowInfo(true)}
-                  className="help-btn"
-                  title="كيفية الاستخدام"
-                >
-                  <Info size={16} /> مساعدة
-                </button>
+        <div className="input-section-wrapper">
+          {/* Main Input Card */}
+          <div className="input-card-main">
+            <div className="input-card-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{
+                  width: '44px',
+                  height: '44px',
+                  background: 'linear-gradient(135deg, var(--primary), var(--primary-light))',
+                  borderRadius: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <Wand2 size={22} color="white" />
+                </div>
+                <div>
+                  <h2 style={{ margin: '0 0 0.2rem', fontSize: '1.3rem', fontWeight: '800', color: 'var(--text)' }}>إنشئ نشاطك</h2>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>صِف فكرتك ودعنا نولد لك محتوى احترافي</p>
+                </div>
               </div>
-              <input
-                id="activity-title"
-                type="text"
-                className="form-control"
-                placeholder="مثال: رحلة البحث عن الكنز، أنشودة الصباح..."
-                value={title}
-                onChange={e => setTitle(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="activity-desc">وصف إضافي (اختياري)</label>
-              <textarea
-                id="activity-desc"
-                className="form-control"
-                placeholder="صف الفكرة، الأهداف، أو أي تفاصيل تريدها..."
-                value={description}
-                onChange={e => setDescription(e.target.value)}
-              />
-            </div>
-
-            {/* Config toggle */}
-            <div className="config-panel">
               <button
                 type="button"
-                id="config-toggle"
-                className={`config-toggle-btn ${configOpen ? 'open' : ''}`}
-                onClick={() => setConfigOpen(o => !o)}
+                onClick={() => setShowInfo(true)}
+                className="help-btn-icon"
+                title="كيفية الاستخدام"
               >
-                <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Settings size={16} /> خصص نشاطك (الفئة العمرية، البيئة، الحجم...)
-                </span>
-                {configOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                <Info size={20} />
               </button>
-
-              {configOpen && (
-                <div className="config-body">
-                  <div className="config-section">
-                    <h4><Baby size={15} /> الفئة العمرية</h4>
-                    <ChipGroup
-                      options={AGE_OPTIONS}
-                      selected={ageGroups}
-                      onToggle={v => toggleArr(ageGroups, setAgeGroups, v)}
-                    />
-                  </div>
-                  <div className="config-section">
-                    <h4><Waves size={15} /> بيئة المخيم</h4>
-                    <ChipGroup
-                      options={ENV_OPTIONS}
-                      selected={environments}
-                      onToggle={v => toggleArr(environments, setEnvironments, v)}
-                      color="secondary"
-                    />
-                  </div>
-                  <div className="config-section">
-                    <h4><Users size={15} /> حجم المجموعة</h4>
-                    <ChipSingle
-                      options={SIZE_OPTIONS}
-                      selected={groupSize}
-                      onSelect={setGroupSize}
-                      color="accent"
-                    />
-                  </div>
-                </div>
-              )}
             </div>
 
-            <button
-              id="generate-btn"
-              type="submit"
-              className="btn-generate"
-              disabled={isLoading || !title.trim()}
-            >
-              {isLoading
-                ? <><Loader2 size={20} className="spin" /> جاري التوليد...</>
-                : <><Sparkles size={20} /> ولّد الأفكار الآن!</>
-              }
-            </button>
-          </form>
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              {/* Title Input */}
+              <div className="input-group-modern">
+                <label htmlFor="activity-title">🎯 موضوع النشاط</label>
+                <input
+                  id="activity-title"
+                  type="text"
+                  className="input-modern"
+                  placeholder="مثال: رحلة البحث عن الكنز، أنشودة الصباح..."
+                  value={title}
+                  onChange={e => setTitle(e.target.value)}
+                  required
+                />
+                <span className="input-hint">أدخل عنوان أو موضوع النشاط الذي تريد توليد محتوى له</span>
+              </div>
+
+              {/* Description Input */}
+              <div className="input-group-modern">
+                <label htmlFor="activity-desc">📝 وصف تفصيلي (اختياري)</label>
+                <textarea
+                  id="activity-desc"
+                  className="input-modern textarea-modern"
+                  placeholder="شارك المزيد من التفاصيل: الأهداف، المستوى، المتطلبات، أي شيء يساعدنا على فهم فكرتك بشكل أفضل..."
+                  value={description}
+                  onChange={e => setDescription(e.target.value)}
+                />
+                <span className="input-hint">شرح تفصيلي يحسّن جودة النتائج</span>
+              </div>
+
+              {/* Config toggle */}
+              <div className="config-panel-modern">
+                <button
+                  type="button"
+                  className="config-toggle-modern"
+                  onClick={() => setConfigOpen(o => !o)}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, justifyContent: 'flex-end' }}>
+                    <span style={{ fontWeight: '600', fontSize: '1rem' }}>⚙️ إعدادات متقدمة</span>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>الفئة العمرية، البيئة، الحجم</span>
+                  </div>
+                  {configOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                </button>
+
+                {configOpen && (
+                  <div className="config-body-modern">
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+                      <div className="config-card">
+                        <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0 0 1rem', fontWeight: '700', color: 'var(--primary)', fontSize: '0.95rem' }}>
+                          <Baby size={18} /> الفئة العمرية
+                        </h4>
+                        <ChipGroup
+                          options={AGE_OPTIONS}
+                          selected={ageGroups}
+                          onToggle={v => toggleArr(ageGroups, setAgeGroups, v)}
+                        />
+                      </div>
+                      <div className="config-card">
+                        <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0 0 1rem', fontWeight: '700', color: 'var(--secondary)', fontSize: '0.95rem' }}>
+                          <Waves size={18} /> بيئة المخيم
+                        </h4>
+                        <ChipGroup
+                          options={ENV_OPTIONS}
+                          selected={environments}
+                          onToggle={v => toggleArr(environments, setEnvironments, v)}
+                          color="secondary"
+                        />
+                      </div>
+                      <div className="config-card">
+                        <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0 0 1rem', fontWeight: '700', color: 'var(--accent-2)', fontSize: '0.95rem' }}>
+                          <Users size={18} /> حجم المجموعة
+                        </h4>
+                        <ChipSingle
+                          options={SIZE_OPTIONS}
+                          selected={groupSize}
+                          onSelect={setGroupSize}
+                          color="accent"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Generate Button */}
+              <button
+                id="generate-btn"
+                type="submit"
+                className="btn-generate-modern"
+                disabled={isLoading || !title.trim()}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 size={22} className="spin" />
+                      جاري التوليد...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={22} />
+                      ولّد الأفكار الآن
+                    </>
+                  )}
+                </div>
+              </button>
+            </form>
+          </div>
         </div>
 
         {/* ── Loading Popup ─────────────────────────── */}
@@ -684,7 +878,7 @@ export default function App() {
                   position: 'absolute',
                   width: '100%',
                   height: '100%',
-                  animation: 'orbit 3s linear infinite'
+                  animation: 'orbit 2s linear infinite'
                 }}>
                   <Music size={32} color="#FF9F1C" style={{ position: 'absolute', top: '0', left: '50%', marginLeft: '-16px' }} />
                 </div>
@@ -692,8 +886,8 @@ export default function App() {
                   position: 'absolute',
                   width: '100%',
                   height: '100%',
-                  animation: 'orbit 3s linear infinite',
-                  animationDelay: '-0.75s'
+                  animation: 'orbit 2s linear infinite',
+                  animationDelay: '-0.5s'
                 }}>
                   <Gamepad2 size={32} color="#2EC4B6" style={{ position: 'absolute', top: '0', left: '50%', marginLeft: '-16px' }} />
                 </div>
@@ -701,8 +895,8 @@ export default function App() {
                   position: 'absolute',
                   width: '100%',
                   height: '100%',
-                  animation: 'orbit 3s linear infinite',
-                  animationDelay: '-1.5s'
+                  animation: 'orbit 2s linear infinite',
+                  animationDelay: '-1s'
                 }}>
                   <Drama size={32} color="#A78BFA" style={{ position: 'absolute', top: '0', left: '50%', marginLeft: '-16px' }} />
                 </div>
@@ -710,8 +904,8 @@ export default function App() {
                   position: 'absolute',
                   width: '100%',
                   height: '100%',
-                  animation: 'orbit 3s linear infinite',
-                  animationDelay: '-2.25s'
+                  animation: 'orbit 2s linear infinite',
+                  animationDelay: '-1.5s'
                 }}>
                   <Sparkles size={32} color="#FF6B6B" style={{ position: 'absolute', top: '0', left: '50%', marginLeft: '-16px' }} />
                 </div>
@@ -779,7 +973,7 @@ export default function App() {
             textAlign: 'center',
             maxWidth: '350px',
             color: 'white',
-            animation: 'popInSuccess 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            animation: 'popInSuccess 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
             boxShadow: '0 25px 50px rgba(74, 222, 128, 0.4)'
           }}>
             <style>{`
@@ -999,7 +1193,7 @@ export default function App() {
           role="alert"
           style={{
             background: toastType === 'success' ? '#4ADE80' : toastType === 'error' ? '#FF4757' : '#3B82F6',
-            animation: 'toastSlide 0.3s ease-out, toastSlideOut 0.3s ease-out 3.2s forwards'
+            animation: 'toastSlide 0.2s ease-out, toastSlideOut 0.2s ease-out 2.3s forwards'
           }}
         >
           {toastType === 'success' ? '✓ ' : toastType === 'error' ? '✕ ' : 'ℹ '}{toast}
@@ -1028,7 +1222,7 @@ export default function App() {
             padding: '2rem',
             zIndex: 2001,
             maxWidth: '420px',
-            animation: 'popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            animation: 'popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
             boxShadow: '0 30px 60px rgba(0, 0, 0, 0.3)',
             textAlign: 'right',
             dir: 'rtl'
@@ -1094,6 +1288,8 @@ export default function App() {
           to { opacity: 0; transform: translateX(-50%) translateY(40px); }
         }
       `}</style>
+          </>
+        )}
     </>
   );
 }
